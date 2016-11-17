@@ -248,23 +248,22 @@ public class MapGraph {
 										  GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
+		Map<GeographicPoint, Boolean> visited = new HashMap<GeographicPoint, Boolean>();
 		for(MapNode node : vertices.values())
 		{
 			node.setDistance(Double.MAX_VALUE);
 			node.setPre(null);
+			visited.put(node.getLocation(), false);
 		}
 		vertices.get(start).setDistance(0);
 		Comparator<MapNode> comp = new MapNodeCompare();
-		PriorityQueue<MapNode> PQ = new PriorityQueue<MapNode>(1, comp);
-		Map<GeographicPoint, Boolean> visited = new HashMap<GeographicPoint, Boolean>();
-		for(GeographicPoint key : vertices.keySet())
-		{
-			visited.put(key, false);
-		}
+		PriorityQueue<MapNode> PQ = new PriorityQueue<MapNode>(100, comp);
 		PQ.add(vertices.get(start));
+		int count = 0;
 		while(!PQ.isEmpty())
 		{
 			MapNode curNode = PQ.peek();
+			count++;
 			visited.put(curNode.getLocation(), true);
 			PQ.poll();
 			nodeSearched.accept(curNode.getLocation());
@@ -295,10 +294,11 @@ public class MapGraph {
 			if(vertices.get(point).getPre() == null) break;
 			point = vertices.get(point).getPre().getLocation();
 		}
+		System.out.println("Number of Nodes Explored: "+count);
+		return path;
+		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
-		
-		return path;
 	}
 
 	/** Find the path from start to goal using A-Star search
@@ -326,11 +326,66 @@ public class MapGraph {
 											 GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
+		Map<MapNode, Boolean> visited = new HashMap<MapNode, Boolean>();
+		for(MapNode node : vertices.values())
+		{
+			node.setDistance(Double.MAX_VALUE);
+			node.setPre(null);
+			visited.put(node, false);
+		}
+		vertices.get(start).setDistance(0);
+		vertices.get(start).setTotalDistance(start.distance(goal));
+		Comparator<MapNode> comp = new MapNodeCompareTotal();
+		PriorityQueue<MapNode> PQ = new PriorityQueue<MapNode>(100, comp);
+		PQ.add(vertices.get(start));
+		int count = 0;
+		Boolean found = false;
+		while(!PQ.isEmpty())
+		{
+			MapNode curNode = PQ.peek();
+			count++;
+			nodeSearched.accept(curNode.getLocation());
+			PQ.poll();
+			visited.put(curNode, true);
+			for(MapEdge curEdge : curNode.getEdges())
+			{
+				MapNode AdjNode = vertices.get(curEdge.getDest());
+				if(visited.get(AdjNode)) continue;
+				if(!PQ.contains(AdjNode))
+				{
+					PQ.add(AdjNode);
+				}
+				if(AdjNode.getDistance() > curNode.getDistance() + curEdge.getLength())
+				{
+					AdjNode.setDistance(curNode.getDistance() + curEdge.getLength());
+					AdjNode.setPre(curNode);
+					AdjNode.setTotalDistance(AdjNode.getDistance() + AdjNode.getLocation().distance(goal));
+					PQ.remove(AdjNode);
+					PQ.add(AdjNode);
+				}
+				if(AdjNode.getLocation().equals(goal))
+				{
+					count++;
+					System.out.println("Number of Nodes Explored: "+count);
+					found = true;
+					break;
+				}
+			}
+			if(found) break;
+		}
+		List<GeographicPoint> path = new ArrayList<GeographicPoint>();
+		GeographicPoint cur = goal;
+		while(cur != null)
+		{
+			path.add(0, cur);
+			if(vertices.get(cur).getPre() == null) break;
+			cur = vertices.get(cur).getPre().getLocation();
+		}
 		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
 		
-		return null;
+		return path;
 	}
 
 	
@@ -372,14 +427,12 @@ public class MapGraph {
 		testMap.printGraph();
 		
 //		 A very simple test using real data
-		testStart = new GeographicPoint(32.866743, -117.2136249);
-		testEnd = new GeographicPoint(32.863053, -117.229059);
+		testStart = new GeographicPoint(32.869423, -117.220917);
+		testEnd = new GeographicPoint(32.869255, -117.216927);
 		System.out.println("Test 2 using utc: Dijkstra should be 13 and AStar should be 5");
-		testroute = testMap.bfs(testStart,testEnd);
 		testroute1 = testMap.dijkstra(testStart,testEnd);
 		testroute2 = testMap.aStarSearch(testStart,testEnd);
-		
-		System.out.println(testroute);
+
 		System.out.println(testroute1);
 		System.out.println(testroute2);
 		
