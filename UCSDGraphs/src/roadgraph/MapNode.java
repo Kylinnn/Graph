@@ -9,14 +9,14 @@ public class MapNode {
 	private GeographicPoint location;
 	private List<MapEdge> AdjList;
 	private double dis;
-	private double preDis;
+	private double totalDis;
 	private MapNode pre;
 	
 	public MapNode(GeographicPoint local) {
 		location = local;
 		AdjList = new ArrayList<MapEdge>();
 		dis = Double.MAX_VALUE;
-		preDis = Double.MAX_VALUE;
+		totalDis = Double.MAX_VALUE;
 		pre = null;
 	}
 	
@@ -32,8 +32,8 @@ public class MapNode {
 		return this.dis;
 	}
 	
-	public double getPreDis() {
-		return this.preDis;
+	public double getTotalDis() {
+		return this.totalDis;
 	}
 	
 	public MapNode getPre() {
@@ -44,6 +44,9 @@ public class MapNode {
 		this.dis = val;;
 	}
 	
+	public void setTotalDistance(double val) {
+		this.totalDis = val;
+	}
 	
 	public void setPre(MapNode n) {
 		this.pre = n;
